@@ -1,6 +1,7 @@
 import logging
 import random
 import os
+import subprocess
 from datetime import datetime, timedelta
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -54,8 +55,15 @@ async def handle_subscription(callback: types.CallbackQuery):
         port = random.randint(10000, 65535)
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
-        await send_config(user_id, config_id)
-        await callback.answer(f"✅ Подписка на {duration} месяц(ев) активирована!")
+        
+        # Создание конфигурации VPN с помощью newclient.sh
+        try:
+            subprocess.run(["./newclient.sh", str(user_id), "your_endpoint", "your_wg_config_file", "your_docker_container"], check=True)
+            await send_config(user_id, config_id)
+            await callback.answer(f"✅ Подписка на {duration} месяц(ев) активирована!")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Ошибка при создании конфигурации VPN: {e}")
+            await callback.answer("❌ Ошибка при создании конфигурации VPN.")
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
 
@@ -102,9 +110,19 @@ async def handle_config(callback: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data.startswith('delete_'))
 async def handle_delete(callback: types.CallbackQuery):
     config_id = int(callback.data.split('_')[1])
-    db.delete_config(config_id)
-    await callback.answer("✅ Конфигурация удалена.")
-    await handle_account(callback.message)
+    config = db.get_config(config_id)
+    
+    if config:
+        try:
+            subprocess.run(["./removeclient.sh", str(config['user_id']), config['public_key'], "your_wg_config_file", "your_docker_container"], check=True)
+            db.delete_config(config_id)
+            await callback.answer("✅ Конфигурация удалена.")
+            await handle_account(callback.message)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Ошибка при удалении конфигурации VPN: {e}")
+            await callback.answer("❌ Ошибка при удалении конфигурации VPN.")
+    else:
+        await callback.answer("❌ Конфигурация не найдена.")
 
 # Обработка скачивания конфигурации
 @dp.callback_query_handler(lambda c: c.data.startswith('download_'))
@@ -165,3 +183,4 @@ ID: {config['config_id']}
 # Запуск бота
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+    
