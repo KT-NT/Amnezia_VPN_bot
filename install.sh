@@ -261,7 +261,7 @@ set_permissions() {
 }
 
 initialize_bot() {
-    cd Amnezia_VPN_bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
+    cd awg || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
     
     ../myenv/bin/python3.11 main.py < /dev/tty &
     local BOT_PID=$!
