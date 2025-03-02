@@ -11,6 +11,7 @@ import getpass
 import threading
 import time
 import bcrypt
+import sqlite3
 from datetime import datetime, timedelta
 
 # Константы для файлов
@@ -275,7 +276,6 @@ def execute_docker_command(command, server_id=None):
     else:
         return subprocess.check_output(command, shell=True).decode()
 
-# Функции для работы с WireGuard и клиентами
 def get_client_list(server_id=None):
     if server_id is None:
         return []
@@ -340,7 +340,6 @@ def get_client_list(server_id=None):
         logger.error(f"Ошибка при получении списка клиентов: {e}")
         return []
 
-# Функции для работы с истечением срока действия и ограничениями трафика
 def load_expirations():
     if not os.path.exists(EXPIRATIONS_FILE):
         return {}
@@ -383,4 +382,105 @@ def save_expirations(expirations):
     with open(EXPIRATIONS_FILE, 'w') as f:
         json.dump(data, f)
 
-# Остальные функции (create_config, get_config, root_add, deactive_user_db и т.д.) также должны быть добавлены.
+# =====================================================================
+# Интегрированный класс Database для управления пользователями и конфигурациями VPN
+# =====================================================================
+
+DB_FILE = "database.db"
+
+class Database:
+    def __init__(self, db_path=DB_FILE):
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        self.create_tables()
+
+    def create_tables(self):
+        """Создает таблицы для пользователей и конфигураций VPN, если они отсутствуют."""
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                balance INTEGER DEFAULT 0
+            )
+        """)
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS configs (
+                config_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                duration INTEGER,
+                port INTEGER,
+                end_date TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            )
+        """)
+        self.conn.commit()
+
+    def user_exists(self, user_id):
+        """Проверяет наличие пользователя в базе данных."""
+        self.cursor.execute("SELECT 1 FROM users WHERE user_id = ?", (user_id,))
+        return self.cursor.fetchone() is not None
+
+    def add_user(self, user_id):
+        """Добавляет нового пользователя, если его нет."""
+        if not self.user_exists(user_id):
+            self.cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
+            self.conn.commit()
+
+    def get_balance(self, user_id):
+        """Возвращает баланс пользователя."""
+        self.cursor.execute("SELECT balance FROM users WHERE user_id = ?", (user_id,))
+        result = self.cursor.fetchone()
+        return result[0] if result else 0
+
+    def update_balance(self, user_id, amount):
+        """Обновляет баланс пользователя (пополнение или списание)."""
+        if self.user_exists(user_id):
+            self.cursor.execute("UPDATE users SET balance = balance + ? WHERE user_id = ?", (amount, user_id))
+            self.conn.commit()
+
+    def add_config(self, user_id, duration, port):
+        """
+        Добавляет новую конфигурацию VPN для пользователя.
+        duration – длительность подписки (в месяцах).
+        port – выбранный порт.
+        """
+        end_date = (datetime.now() + timedelta(days=duration * 30)).strftime("%Y-%m-%d")
+        self.cursor.execute("""
+            INSERT INTO configs (user_id, duration, port, end_date) 
+            VALUES (?, ?, ?, ?)
+        """, (user_id, duration, port, end_date))
+        self.conn.commit()
+        return self.cursor.lastrowid
+
+    def get_configs(self, user_id):
+        """Возвращает список конфигураций VPN для пользователя."""
+        self.cursor.execute("SELECT * FROM configs WHERE user_id = ?", (user_id,))
+        rows = self.cursor.fetchall()
+        return [
+            {"config_id": row[0], "user_id": row[1], "duration": row[2], "port": row[3], "end_date": row[4]}
+            for row in rows
+        ]
+
+    def get_config(self, config_id):
+        """Возвращает данные конкретной конфигурации по её ID."""
+        self.cursor.execute("SELECT * FROM configs WHERE config_id = ?", (config_id,))
+        row = self.cursor.fetchone()
+        if row:
+            return {"config_id": row[0], "user_id": row[1], "duration": row[2], "port": row[3], "end_date": row[4]}
+        return None
+
+    def extend_config(self, config_id, duration):
+        """Продлевает срок действия конфигурации на указанное количество месяцев."""
+        config = self.get_config(config_id)
+        if config:
+            new_end_date = (datetime.strptime(config["end_date"], "%Y-%m-%d") + timedelta(days=duration * 30)).strftime("%Y-%m-%d")
+            self.cursor.execute("UPDATE configs SET end_date = ? WHERE config_id = ?", (new_end_date, config_id))
+            self.conn.commit()
+
+    def delete_config(self, config_id):
+        """Удаляет конфигурацию VPN по её ID."""
+        self.cursor.execute("DELETE FROM configs WHERE config_id = ?", (config_id,))
+        self.conn.commit()
+
+    def close(self):
+        """Закрывает соединение с базой данных."""
+        self.conn.close()
