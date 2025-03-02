@@ -14,9 +14,14 @@ humanize==4.11.0
 idna==3.10
 magic-filter==1.0.12
 multidict==6.1.0
+pyTelegramBotAPI
+python-dotenv
+paramiko
 propcache==0.2.0
 pytz==2024.2
 six==1.16.0
 tzlocal==5.2
 yarl==1.17.1
 paramiko==3.4.0
+
+
