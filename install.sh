@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SERVICE_NAME="awg_bot"
+SERVICE_NAME="amnezia_vpn_bot"
 
 GREEN=$'\033[0;32m'
 YELLOW=$'\033[1;33m'
@@ -140,7 +140,6 @@ check_updates() {
     fi
 }
 
-
 service_control_menu() {
     while true; do
         echo -e "\n${BLUE}=== Управление службой $SERVICE_NAME ===${NC}"
@@ -166,7 +165,7 @@ service_control_menu() {
 
 installed_menu() {
     while true; do
-        echo -e "\n${BLUE}=== AWG Docker Telegram Bot ===${NC}"
+        echo -e "\n${BLUE}=== Amnezia VPN Telegram Bot ===${NC}"
         echo -e "${GREEN}1${NC}. Проверить обновления"
         echo -e "${GREEN}2${NC}. Управление службой"
         echo -e "${YELLOW}3${NC}. Выход"
@@ -225,7 +224,7 @@ check_python() {
 }
 
 install_dependencies() {
-    run_with_spinner "Установка зависимостей" "sudo apt-get install jq net-tools iptables resolvconf git -y -qq"
+    run_with_spinner "Установка системных зависимостей" "sudo apt-get install jq net-tools iptables resolvconf git libffi-dev libssl-dev -y -qq"
 }
 
 install_and_configure_needrestart() {
@@ -235,14 +234,14 @@ install_and_configure_needrestart() {
 }
 
 clone_repository() {
-    if [[ -d "awg-docker-bot" ]]; then
+    if [[ -d "Amnezia_VPN_bot" ]]; then
         echo -e "\n${YELLOW}Репозиторий существует${NC}"
-        cd awg-docker-bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
+        cd Amnezia_VPN_bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
         return 0
     fi
     
-    run_with_spinner "Клонирование репозитория" "git clone https://github.com/JB-SelfCompany/awg-docker-bot.git >/dev/null 2>&1"
-    cd awg-docker-bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
+    run_with_spinner "Клонирование репозитория" "git clone https://github.com/KT-NT/Amnezia_VPN_bot.git >/dev/null 2>&1"
+    cd Amnezia_VPN_bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
 }
 
 setup_venv() {
@@ -262,15 +261,19 @@ set_permissions() {
 }
 
 initialize_bot() {
-    cd awg || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
+    cd Amnezia_VPN_bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
     
-    ../myenv/bin/python3.11 bot_manager.py < /dev/tty &
+    ../myenv/bin/python3.11 main.py < /dev/tty &
     local BOT_PID=$!
     
-    while [ ! -f "files/setting.ini" ]; do
-        sleep 2
-        kill -0 "$BOT_PID" 2>/dev/null || { echo -e "\n${RED}Бот завершил работу до инициализации${NC}"; exit 1; }
-    done
+    # Убедимся, что бот запустился
+    sleep 5  # Дадим боту время на запуск
+    if kill -0 "$BOT_PID" 2>/dev/null; then
+        echo -e "${GREEN}Бот успешно запущен${NC}"
+    else
+        echo -e "${RED}Бот завершил работу до инициализации${NC}"
+        exit 1
+    fi
     
     kill "$BOT_PID"
     wait "$BOT_PID" 2>/dev/null
@@ -285,8 +288,8 @@ After=network.target
 
 [Service]
 User=$USER
-WorkingDirectory=$(pwd)/awg
-ExecStart=$(pwd)/myenv/bin/python3.11 bot_manager.py
+WorkingDirectory=$(pwd)/Amnezia_VPN_bot
+ExecStart=$(pwd)/myenv/bin/python3.11 main.py
 Restart=always
 
 [Install]
