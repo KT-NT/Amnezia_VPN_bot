@@ -3,49 +3,48 @@ import random
 import os
 import subprocess
 from datetime import datetime, timedelta
-from aiogram import Bot, types
-from aiogram.dispatcher import Dispatcher
-from aiogram.utils import executor
+from aiogram.dispatcher import dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from db import Database  # Импортируем базу данных из db.py
 from keyboards import main_menu, subscription_options  # Импортируем клавиатуры
+from aiogram import Bot, Dispatcher, Router, types
+from aiogram.filters import Command
+from aiogram.types import Message
+import asyncio
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Инициализация бота
 TOKEN = '8005821803:AAG5oLy-BhqKyvfEgNnMgeYfDKCNvsIGIQU'
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
 
-# Инициализация базы данных
 db = Database()
-
-# Команда /start
-@dp.message_handler(commands=['start'])
-async def handle_start(message: types.Message):
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+router = Router()
+dp.include_router(router)
+@router.message(Command("/start"))
+async def handle_start(message: Message):
     user_id = message.from_user.id
     if not db.user_exists(user_id):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
     await message.answer("Добро пожаловать!", reply_markup=main_menu())
 
-# Команда /replenish (пополнение баланса)
-@dp.message_handler(commands=['replenish'])
+
+@router.message(Command("replenish"))
 async def handle_replenish(message: types.Message):
     user_id = message.from_user.id
     db.update_balance(user_id, 100)  # Пополнение на 100 руб.
     await message.answer("✅ Баланс пополнен на 100 руб.")
 
-# Команда /buy_vpn (покупка VPN)
-@dp.message_handler(commands=['buy_vpn'])
+@router.message(Command("buy_vpn"))
 async def buy_vpn(message: types.Message):
     user_id = message.from_user.id
     await message.answer("💰 Выберите срок подписки:", reply_markup=subscription_options())
 
 # Обработка выбора подписки
-@dp.callback_query_handler(lambda c: c.data in ['1_month', '2_months', '3_months'])
+@router.message(lambda c: c.data in ['1_month', '2_months', '3_months'])
+#@dp.callback_query_handler(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
@@ -55,7 +54,7 @@ async def handle_subscription(callback: types.CallbackQuery):
         port = random.randint(10000, 65535)
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
-        
+
         # Создание конфигурации VPN с помощью newclient.sh
         try:
             subprocess.run(["./newclient.sh", str(user_id), "your_endpoint", "your_wg_config_file", "your_docker_container"], check=True)
@@ -68,7 +67,7 @@ async def handle_subscription(callback: types.CallbackQuery):
         await callback.answer("❌ Недостаточно средств на балансе.")
 
 # Команда /account (профиль)
-@dp.message_handler(commands=['account'])
+@router.message(Command("account"))
 async def handle_account(message: types.Message):
     user_id = message.from_user.id
     configs = db.get_configs(user_id)
@@ -85,7 +84,8 @@ async def handle_account(message: types.Message):
     await message.answer("Ваши активные конфигурации:", reply_markup=keyboard)
 
 # Обработка выбора конфигурации
-@dp.callback_query_handler(lambda c: c.data.startswith('config_'))
+@router.message(lambda c: c.data.startswith('config_'))
+#@dp.callback_query_handler(lambda c: c.data.startswith('config_'))
 async def handle_config(callback: types.CallbackQuery):
     config_id = int(callback.data.split('_')[1])
     config = db.get_config(config_id)
@@ -107,11 +107,12 @@ async def handle_config(callback: types.CallbackQuery):
     )
 
 # Обработка удаления конфигурации
-@dp.callback_query_handler(lambda c: c.data.startswith('delete_'))
+@router.message(lambda c: c.data.startswith('delete_'))
+#@dp.callback_query_handler(lambda c: c.data.startswith('delete_'))
 async def handle_delete(callback: types.CallbackQuery):
     config_id = int(callback.data.split('_')[1])
     config = db.get_config(config_id)
-    
+
     if config:
         try:
             subprocess.run(["./removeclient.sh", str(config['user_id']), config['public_key'], "your_wg_config_file", "your_docker_container"], check=True)
@@ -125,14 +126,16 @@ async def handle_delete(callback: types.CallbackQuery):
         await callback.answer("❌ Конфигурация не найдена.")
 
 # Обработка скачивания конфигурации
-@dp.callback_query_handler(lambda c: c.data.startswith('download_'))
+#@dp.callback_query_handler(lambda c: c.data.startswith('download_'))
+@router.message(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: types.CallbackQuery):
     config_id = int(callback.data.split('_')[1])
     await send_config(callback.from_user.id, config_id)
     await callback.answer("✅ Конфигурация отправлена.")
 
 # Обработка продления конфигурации
-@dp.callback_query_handler(lambda c: c.data.startswith('extend_'))
+@router.message(lambda c: c.data.startswith('extend_'))
+#@dp.callback_query_handler(lambda c: c.data.startswith('extend_'))
 async def handle_extend(callback: types.CallbackQuery):
     config_id = int(callback.data.split('_')[1])
     await callback.message.edit_text(
@@ -141,7 +144,8 @@ async def handle_extend(callback: types.CallbackQuery):
     )
 
 # Обработка выбора продления
-@dp.callback_query_handler(lambda c: 'extend' in c.data)
+@router.message(lambda c: 'extend' in c.data)
+#@dp.callback_query_handler(lambda c: 'extend' in c.data)
 async def handle_extend_subscription(callback: types.CallbackQuery):
     parts = callback.data.split('_')
     duration = int(parts[0])  # 1, 2 или 3 месяца
@@ -165,14 +169,14 @@ async def send_config(user_id, config_id):
 ID: {config['config_id']}
 Порт: {config['port']}
 Срок действия: {config['end_date']}"""
-            
+
             filename = f"config_{config_id}.txt"
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
-            
+
             with open(filename, "rb") as f:
                 await bot.send_document(user_id, f, caption="📂 Ваш конфиг VPN")
-            
+
             os.remove(filename)
         else:
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
@@ -180,7 +184,7 @@ ID: {config['config_id']}
         logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
-# Запуск бота
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
-    
+async def main():
+    await dp.start_polling(bot)
+if __name__ == "__main__":
+    asyncio.run(main())
