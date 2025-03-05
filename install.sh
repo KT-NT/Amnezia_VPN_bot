@@ -240,7 +240,7 @@ clone_repository() {
         return 0
     fi
     
-    run_with_spinner "Клонирование репозитория" "git clone https://github.com/KT-NT/Amnezia_VPN_bot.git >/dev/null 2>&1"
+    run_with_spinner "Клонирование репозитория" "git clone https://github.com/KT-NT/Amnezia_VPN_bot/test2.git >/dev/null 2>&1"
     cd Amnezia_VPN_bot || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
 }
 
