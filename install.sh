@@ -165,7 +165,7 @@ service_control_menu() {
 
 installed_menu() {
     while true; do
-        echo -e "\n${BLUE}=== Amnezia VPN Telegram Bot ===${NC}"
+        echo -e "\n${BLUE}=== Amnezia_VPN_bot ===${NC}"
         echo -e "${GREEN}1${NC}. Проверить обновления"
         echo -e "${GREEN}2${NC}. Управление службой"
         echo -e "${YELLOW}3${NC}. Выход"
@@ -283,7 +283,7 @@ initialize_bot() {
 create_service() {
     cat > /tmp/service_file << EOF
 [Unit]
-Description=AmneziaVPN Docker Telegram Bot
+Description=Amnezia_VPN_bot
 After=network.target
 
 [Service]
