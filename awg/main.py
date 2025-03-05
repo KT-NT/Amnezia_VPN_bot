@@ -172,7 +172,7 @@ async def handle_back_to_account(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data.startswith("back_to_config_"))
 async def handle_back_to_config(callback: CallbackQuery):
-    config_id = callback.data.split("_")[-1]
+    config_id = int(callback.data.split("_")[-1])
     await handle_config(callback)
     await callback.answer()
 
