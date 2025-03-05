@@ -34,20 +34,20 @@ async def handle_start(message: Message):
         logger.info(f"Новый пользователь: {user_id}")
     await message.answer("Добро пожаловать!", reply_markup=main_menu())
 
-@router.callback_query(lambda c: c.data == "replenish"))
+@router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
     db.update_balance(user_id, 100)  # Пополнение на 100 руб.
     await callback.message.edit_text("✅ Баланс пополнен на 100 руб.")
     await callback.answer()
 
-@router.callback_query(lambda c: c.data == "buy_vpn"))
+@router.callback_query(lambda c: c.data == "buy_vpn")
 async def buy_vpn(callback: CallbackQuery):
     user_id = callback.from_user.id
     await callback.message.edit_text("💰 Выберите срок подписки:", reply_markup=subscription_options())
     await callback.answer()
 
-@router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months']))
+@router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
@@ -72,7 +72,7 @@ async def handle_subscription(callback: CallbackQuery):
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
 
-@router.callback_query(lambda c: c.data == "account"))
+@router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
     user_id = callback.from_user.id
     configs = db.get_configs(user_id)
@@ -133,7 +133,7 @@ async def handle_extend(callback: CallbackQuery):
         reply_markup=subscription_options(config_id)
     )
 
-@router.callback_query(lambda c: 'extend' in c.data))
+@router.callback_query(lambda c: 'extend' in c.data)
 async def handle_extend_subscription(callback: CallbackQuery):
     parts = callback.data.split('_')
     duration = int(parts[0])  # 1, 2 или 3 месяца
@@ -165,7 +165,7 @@ async def send_config(user_id, config_id):
         logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
-@router.callback_query(lambda c: c.data == "back_to_account"))
+@router.callback_query(lambda c: c.data == "back_to_account")
 async def handle_back_to_account(callback: CallbackQuery):
     await handle_account(callback)
     await callback.answer()
