@@ -57,9 +57,11 @@ async def handle_subscription(callback: CallbackQuery):
         port = random.randint(10000, 65535)
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
+        logger.info(f"ENDPOINT={ENDPOINT}, WG_CONFIG_FILE={WG_CONFIG_FILE}, DOCKER_CONTAINER={DOCKER_CONTAINER}")
 
         # Создание конфигурации VPN
         try:
+            logger.info(f"ENDPOINT={ENDPOINT}, WG_CONFIG_FILE={WG_CONFIG_FILE}, DOCKER_CONTAINER={DOCKER_CONTAINER}")
             subprocess.run(
                 ["./newclient.sh", str(user_id), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
                 check=True
