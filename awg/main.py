@@ -7,7 +7,7 @@ from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 import asyncio
-from db import Database
+from db import Database, SSHManager, load_servers, save_servers, add_server, remove_server, get_server_list
 from keyboards import *
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,7 @@ dp.include_router(router)
 WG_CONFIG_FILE = None
 DOCKER_CONTAINER = None
 ENDPOINT = None
+CURRENT_SERVER = None
 
 @router.message(Command("start"))
 async def handle_start(message: Message):
@@ -57,11 +58,9 @@ async def handle_subscription(callback: CallbackQuery):
         port = random.randint(10000, 65535)
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
-        logger.info(f"ENDPOINT={ENDPOINT}, WG_CONFIG_FILE={WG_CONFIG_FILE}, DOCKER_CONTAINER={DOCKER_CONTAINER}")
 
         # Создание конфигурации VPN
         try:
-            logger.info(f"ENDPOINT={ENDPOINT}, WG_CONFIG_FILE={WG_CONFIG_FILE}, DOCKER_CONTAINER={DOCKER_CONTAINER}")
             subprocess.run(
                 ["./newclient.sh", str(user_id), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
                 check=True
@@ -74,7 +73,7 @@ async def handle_subscription(callback: CallbackQuery):
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
 
-@router.callback_query(lambda c: c.data == "account")
+@router.callback_query(lambda c: c.data == "account"))
 async def handle_account(callback: CallbackQuery):
     user_id = callback.from_user.id
     configs = db.get_configs(user_id)
@@ -135,7 +134,7 @@ async def handle_extend(callback: CallbackQuery):
         reply_markup=subscription_options(config_id)
     )
 
-@router.callback_query(lambda c: 'extend' in c.data)
+@router.callback_query(lambda c: 'extend' in c.data))
 async def handle_extend_subscription(callback: CallbackQuery):
     parts = callback.data.split('_')
     duration = int(parts[0])  # 1, 2 или 3 месяца
@@ -167,7 +166,7 @@ async def send_config(user_id, config_id):
         logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
-@router.callback_query(lambda c: c.data == "back_to_account")
+@router.callback_query(lambda c: c.data == "back_to_account"))
 async def handle_back_to_account(callback: CallbackQuery):
     await handle_account(callback)
     await callback.answer()
