@@ -35,6 +35,16 @@ def save_servers(servers):
     with open(SERVERS_FILE, 'w') as f:
         json.dump(servers, f)
 
+def hash_password(password):
+    if not password:
+        return None
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(password, hashed):
+    if not password or not hashed:
+        return False
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
 def add_server(server_id, host, port, username, auth_type, password=None, key_path=None):
     servers = load_servers()
     server_config = {
