@@ -288,7 +288,7 @@ After=network.target
 
 [Service]
 User=$USER
-WorkingDirectory=$(pwd)/Amnezia_VPN_bot
+WorkingDirectory=$(pwd)/awg
 ExecStart=$(pwd)/myenv/bin/python3.11 main.py
 Restart=always
 
