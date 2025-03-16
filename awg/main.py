@@ -9,6 +9,8 @@ from aiogram.types import Message, CallbackQuery
 import asyncio
 from db import Database, SSHManager, load_servers, save_servers, add_server, remove_server, get_server_list
 from keyboards import *
+from aiogram.types import InputFile
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,24 +104,23 @@ async def handle_config(callback: CallbackQuery):
     )
 
 @router.callback_query(lambda c: c.data.startswith('delete_'))
-async def handle_delete(callback: CallbackQuery):
-    config_id = int(callback.data.split('_')[1])
-    config = db.get_config(config_id)
-
-    if config:
-        try:
-            subprocess.run(
-                ["./removeclient.sh", str(config['user_id']), "your_public_key", WG_CONFIG_FILE, DOCKER_CONTAINER],
-                check=True
-            )
-            db.delete_config(config_id)
-            await callback.answer("✅ Конфигурация удалена.")
-            await handle_account(callback)  # Обновляем список конфигураций
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Ошибка при удалении VPN-конфигурации: {e}")
-            await callback.answer("❌ Ошибка при удалении конфигурации.")
-    else:
-        await callback.answer("❌ Конфигурация не найдена.")
+async def send_config(user_id, config_id):
+    try:
+        config = db.get_config(config_id)
+        if config:
+            # Чтение конфигурационного файла
+            config_file_path = f"./users/{user_id}/{user_id}.conf"
+            if os.path.exists(config_file_path):
+                # Используем InputFile для отправки файла
+                document = InputFile(config_file_path)
+                await bot.send_document(user_id, document, caption="📂 Ваш конфиг VPN")
+            else:
+                await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
+        else:
+            await bot.send_message(user_id, "❌ Конфигурация не найдена.")
+    except Exception as e:
+        logger.error(f"Ошибка отправки конфигурации: {e}")
+        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
 @router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
