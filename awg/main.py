@@ -110,13 +110,17 @@ async def send_config(user_id, config_id):
         if config:
             # Чтение конфигурационного файла
             config_file_path = f"./users/{user_id}/{user_id}.conf"
+            logger.info(f"Попытка отправить файл: {config_file_path}")
             if os.path.exists(config_file_path):
                 # Используем InputFile для отправки файла
                 document = InputFile(config_file_path)
+                logger.info(f"Файл найден, отправка документа: {document}")
                 await bot.send_document(user_id, document, caption="📂 Ваш конфиг VPN")
             else:
+                logger.error(f"Файл не найден: {config_file_path}")
                 await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
         else:
+            logger.error(f"Конфигурация не найдена: config_id={config_id}")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
     except Exception as e:
         logger.error(f"Ошибка отправки конфигурации: {e}")
