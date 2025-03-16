@@ -73,7 +73,7 @@ async def handle_subscription(callback: CallbackQuery):
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
 
-@router.callback_query(lambda c: c.data == "account"))
+@router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
     user_id = callback.from_user.id
     configs = db.get_configs(user_id)
@@ -134,7 +134,7 @@ async def handle_extend(callback: CallbackQuery):
         reply_markup=subscription_options(config_id)
     )
 
-@router.callback_query(lambda c: 'extend' in c.data))
+@router.callback_query(lambda c: 'extend' in c.data)
 async def handle_extend_subscription(callback: CallbackQuery):
     parts = callback.data.split('_')
     duration = int(parts[0])  # 1, 2 или 3 месяца
@@ -166,7 +166,7 @@ async def send_config(user_id, config_id):
         logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
-@router.callback_query(lambda c: c.data == "back_to_account"))
+@router.callback_query(lambda c: c.data == "back_to_account")
 async def handle_back_to_account(callback: CallbackQuery):
     await handle_account(callback)
     await callback.answer()
