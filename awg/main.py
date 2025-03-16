@@ -22,10 +22,10 @@ router = Router()
 dp.include_router(router)
 
 # Константы для сервера
-WG_CONFIG_FILE = None
-DOCKER_CONTAINER = None
-ENDPOINT = None
-CURRENT_SERVER = None
+WG_CONFIG_FILE = "/opt/amnezia/awg/wg0.conf"  # Укажите правильный путь
+DOCKER_CONTAINER = "amnezia-awg"  # Укажите правильное имя контейнера
+ENDPOINT = "85.192.27.245"  # Укажите правильный endpoint
+
 
 @router.message(Command("start"))
 async def handle_start(message: Message):
