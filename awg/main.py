@@ -25,6 +25,7 @@ dp.include_router(router)
 WG_CONFIG_FILE = "/opt/amnezia/awg/wg0.conf"  # Укажите правильный путь
 DOCKER_CONTAINER = "amnezia-awg"  # Укажите правильное имя контейнера
 ENDPOINT = "85.192.27.245"  # Укажите правильный endpoint
+CURRENT_SERVER = None
 
 
 @router.message(Command("start"))
