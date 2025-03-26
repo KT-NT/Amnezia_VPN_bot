@@ -112,30 +112,48 @@ async def handle_config(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def send_config(user_id, config_id):
     try:
+        # Получаем конфигурацию из базы данных
         config = db.get_config(config_id)
         if not config:
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        # Получаем все конфиги пользователя для определения номера
+        # Получаем все конфиги пользователя
         configs = db.get_configs(user_id)
-        config_number = next((i for i, c in enumerate(configs, 1) if c['config_id'] == config_id else 1)
         
+        # Находим порядковый номер конфига
+        config_number = 1
+        for i, conf in enumerate(configs, start=1):
+            if conf['config_id'] == config_id:
+                config_number = i
+                break
+
+        # Формируем путь к файлу конфигурации
         config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
+        
+        # Проверяем существование файла
         if not os.path.exists(config_file_path):
+            logger.error(f"Файл конфигурации не найден: {config_file_path}")
             await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
             return
 
+        # Читаем и отправляем файл
         with open(config_file_path, 'rb') as file:
+            file_content = file.read()
+            
             await bot.send_document(
                 chat_id=user_id,
                 document=types.BufferedInputFile(
-                    file.read(),
+                    file_content,
                     filename=f"vpn_config_{user_id}_{config_number}.conf"
                 ),
                 caption=f"📂 Ваш конфиг VPN (#{config_number})"
             )
+            logger.info(f"Конфиг #{config_number} успешно отправлен пользователю {user_id}")
 
+    except Exception as e:
+        logger.error(f"Ошибка отправки конфигурации: {str(e)}", exc_info=True)
+        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
     except Exception as e:
         logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
