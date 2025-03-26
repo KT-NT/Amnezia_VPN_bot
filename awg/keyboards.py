@@ -40,13 +40,11 @@ def subscription_options(config_id=None):
 def configs_menu(configs):
     """Меню конфигов"""
     buttons = []
-    for config in configs:
-        btn_text = f"🔑 #{config['config_id']} (до {config['end_date'][5:10]})"
+    for i, config in enumerate(configs, 1):
+        btn_text = f"🔑 #{i} (ID: {config['config_id']}, до {config['end_date'][5:10]})"
         buttons.append([InlineKeyboardButton(text=btn_text, callback_data=f'config_{config["config_id"]}')])
 
-    #buttons.append([InlineKeyboardButton(text="◀️ Назад", callback_data='main_menu')])
     buttons.append([InlineKeyboardButton(text="◀️ Назад", callback_data='back_to_main')])
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
