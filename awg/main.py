@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
+from aiogram.types import InputFile
 import asyncio
 from db import Database, SSHManager, load_servers, save_servers, add_server, remove_server, get_server_list
 from keyboards import *
@@ -107,25 +108,26 @@ async def handle_config(callback: CallbackQuery):
 async def send_config(user_id, config_id):
     try:
         config = db.get_config(config_id)
-        if config:
-            # Path to the config file
-            config_file_path = f"./users/{user_id}/{user_id}.conf"
-            if os.path.exists(config_file_path):
-                # Use InputFile to send the document
-                document = InputFile(config_file_path)
-                await bot.send_document(
-                    chat_id=user_id,
-                    document=document,
-                    caption="📂 Ваш конфиг VPN"
-                )
-            else:
-                logger.error(f"Config file not found: {config_file_path}")
-                await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
-        else:
-            logger.error(f"Config not found: config_id={config_id}")
+        if not config:
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
+            return
+
+        config_file_path = f"./users/{user_id}/{user_id}.conf"
+        if not os.path.exists(config_file_path):
+            await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
+            return
+
+        # Открываем файл в бинарном режиме и создаем InputFile
+        with open(config_file_path, 'rb') as file:
+            input_file = InputFile(file, filename=f"vpn_config_{user_id}.conf")
+            await bot.send_document(
+                chat_id=user_id,
+                document=input_file,
+                caption="📂 Ваш конфиг VPN"
+            )
+
     except Exception as e:
-        logger.error(f"Error sending config: {e}")
+        logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
 @router.callback_query(lambda c: c.data.startswith('download_'))
