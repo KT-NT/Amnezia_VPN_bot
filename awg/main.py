@@ -211,9 +211,12 @@ async def handle_back_to_account(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data.startswith("back_to_config_"))
 async def handle_back_to_config(callback: CallbackQuery):
-    config_id = int(callback.data.split("_")[-1])
-    await handle_config(callback)
-    await callback.answer()
+    try:
+        config_id = int(callback.data.split("_")[-1])
+        await handle_config(callback)
+    except ValueError:
+        await callback.answer("❌ Некорректный идентификатор конфигурации.")
+        logger.error(f"Неверный формат config_id: {callback.data}")
 
 @router.callback_query(lambda c: c.data.startswith("back_to_main"))
 async def handle_back_main(callback: CallbackQuery):
