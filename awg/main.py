@@ -112,53 +112,32 @@ async def handle_config(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def send_config(user_id, config_id):
     try:
-        logger.info(f"Попытка отправить конфиг для user_id={user_id}, config_id={config_id}")
-        
         config = db.get_config(config_id)
         if not config:
-            logger.error(f"Конфигурация не найдена: config_id={config_id}")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        config_file_path = f"./users/{user_id}/{user_id}.conf"
-        logger.info(f"Проверяем существование файла: {config_file_path}")
+        # Получаем все конфиги пользователя для определения номера
+        configs = db.get_configs(user_id)
+        config_number = next((i for i, c in enumerate(configs, 1) if c['config_id'] == config_id else 1)
         
+        config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
         if not os.path.exists(config_file_path):
-            logger.error(f"Файл конфигурации не найден: {config_file_path}")
             await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
             return
 
-        logger.info(f"Файл найден, пробуем отправить: {config_file_path}")
-        
-        # Альтернативный способ отправки файла
-        try:
-            with open(config_file_path, 'rb') as file:
-                await bot.send_document(
-                    chat_id=user_id,
-                    document=types.BufferedInputFile(
-                        file.read(),
-                        filename=f"vpn_config_{user_id}.conf"
-                    ),
-                    caption="📂 Ваш конфиг VPN"
-                )
-            logger.info("Конфигурация успешно отправлена")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке через BufferedInputFile: {e}")
-            # Пробуем альтернативный метод
-            try:
-                with open(config_file_path, 'rb') as file:
-                    await bot.send_document(
-                        chat_id=user_id,
-                        document=file,
-                        caption="📂 Ваш конфиг VPN"
-                    )
-                logger.info("Конфигурация успешно отправлена (альтернативный метод)")
-            except Exception as e2:
-                logger.error(f"Ошибка при альтернативной отправке: {e2}")
-                raise e2
+        with open(config_file_path, 'rb') as file:
+            await bot.send_document(
+                chat_id=user_id,
+                document=types.BufferedInputFile(
+                    file.read(),
+                    filename=f"vpn_config_{user_id}_{config_number}.conf"
+                ),
+                caption=f"📂 Ваш конфиг VPN (#{config_number})"
+            )
 
     except Exception as e:
-        logger.error(f"Критическая ошибка отправки конфигурации: {e}", exc_info=True)
+        logger.error(f"Ошибка отправки конфигурации: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
 @router.callback_query(lambda c: c.data.startswith('download_'))
