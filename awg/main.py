@@ -54,6 +54,7 @@ async def buy_vpn(callback: CallbackQuery):
     await callback.answer()
 
 @router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
+@router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
@@ -64,10 +65,13 @@ async def handle_subscription(callback: CallbackQuery):
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
 
-        # Создание конфигурации VPN
+        # Получаем количество конфигов у пользователя
+        configs = db.get_configs(user_id)
+        config_number = len(configs)  # Номер текущего конфига
+
         try:
             subprocess.run(
-                ["./newclient.sh", str(user_id), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
+                ["./newclient.sh", str(user_id), str(config_number), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
                 check=True
             )
             await send_config(user_id, config_id)
