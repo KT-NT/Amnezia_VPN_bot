@@ -8,24 +8,33 @@ if [ -z "$1" ]; then
 fi
 
 if [ -z "$2" ]; then
-    echo "Error: ENDPOINT argument is not provided"
+    echo "Error: CONFIG_NUMBER argument is not provided"
     exit 1
 fi
 
 if [ -z "$3" ]; then
-    echo "Error: WG_CONFIG_FILE argument is not provided"
+    echo "Error: ENDPOINT argument is not provided"
     exit 1
 fi
 
 if [ -z "$4" ]; then
+    echo "Error: WG_CONFIG_FILE argument is not provided"
+    exit 1
+fi
+
+if [ -z "$5" ]; then
     echo "Error: DOCKER_CONTAINER argument is not provided"
     exit 1
 fi
 
 CLIENT_NAME="$1"
-ENDPOINT="$2"
-WG_CONFIG_FILE="$3"
-DOCKER_CONTAINER="$4"
+CONFIG_NUMBER="$2"
+ENDPOINT="$3"
+WG_CONFIG_FILE="$4"
+DOCKER_CONTAINER="$5"
+
+CONFIG_FILE_NAME="${CLIENT_NAME}_${CONFIG_NUMBER}.conf"
+CONFIG_FILE_PATH="users/$CLIENT_NAME/$CONFIG_FILE_NAME"
 
 CONFIG_FILE="files/setting.ini"
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -107,7 +116,7 @@ fi
 
 cat << EOF >> "$SERVER_CONF_PATH"
 [Peer]
-# $CLIENT_NAME
+# $CLIENT_NAME (config $CONFIG_NUMBER)
 PublicKey = $CLIENT_PUBLIC_KEY
 PresharedKey = $psk
 AllowedIPs = $ALLOWED_IPS
@@ -124,7 +133,7 @@ else
     docker exec -i $DOCKER_CONTAINER sh -c "wg-quick down $WG_CONFIG_FILE && wg-quick up $WG_CONFIG_FILE"
 fi
 
-cat << EOF > "$pwd/users/$CLIENT_NAME/$CLIENT_NAME.conf"
+cat << EOF > "$pwd/users/$CLIENT_NAME/$CONFIG_FILE_NAME"
 [Interface]
 Address = $CLIENT_IP
 DNS = 1.1.1.1, 1.0.0.1
@@ -150,15 +159,17 @@ CREATION_DATE=$(date)
 if [ -f "$CLIENTS_TABLE_PATH" ]; then
     jq --arg clientId "$CLIENT_PUBLIC_KEY" \
     --arg clientName "$CLIENT_NAME" \
+    --arg configNumber "$CONFIG_NUMBER" \
     --arg creationDate "$CREATION_DATE" \
-    '. += [{"clientId": $clientId, "userData": {"clientName": $clientName, "creationDate": $creationDate}}]' \
+    '. += [{"clientId": $clientId, "userData": {"clientName": $clientName, "configNumber": $configNumber, "creationDate": $creationDate}}]' \
     "$CLIENTS_TABLE_PATH" > "$CLIENTS_TABLE_PATH.tmp"
     mv "$CLIENTS_TABLE_PATH.tmp" "$CLIENTS_TABLE_PATH"
 else
     jq -n --arg clientId "$CLIENT_PUBLIC_KEY" \
     --arg clientName "$CLIENT_NAME" \
+    --arg configNumber "$CONFIG_NUMBER" \
     --arg creationDate "$CREATION_DATE" \
-    '[{"clientId": $clientId, "userData": {"clientName": $clientName, "creationDate": $creationDate}}]' \
+    '[{"clientId": $clientId, "userData": {"clientName": $clientName, "configNumber": $configNumber, "creationDate": $creationDate}}]' \
     > "$CLIENTS_TABLE_PATH"
 fi
 
@@ -170,7 +181,7 @@ else
     docker cp "$CLIENTS_TABLE_PATH" $DOCKER_CONTAINER:/opt/amnezia/awg/clientsTable
 fi
 
-traffic_file="$pwd/users/$CLIENT_NAME/traffic.json"
+traffic_file="$pwd/users/$CLIENT_NAME/traffic_${CONFIG_NUMBER}.json"
 echo '{
 "total_incoming": 0,
 "total_outgoing": 0,
@@ -178,4 +189,4 @@ echo '{
 "last_outgoing": 0
 }' > "$traffic_file"
 
-echo "Client $CLIENT_NAME successfully added to WireGuard"
+echo "Client $CLIENT_NAME (config $CONFIG_NUMBER) successfully added to WireGuard"
