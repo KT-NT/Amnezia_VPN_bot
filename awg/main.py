@@ -108,22 +108,24 @@ async def send_config(user_id, config_id):
     try:
         config = db.get_config(config_id)
         if config:
-            # Чтение конфигурационного файла
+            # Path to the config file
             config_file_path = f"./users/{user_id}/{user_id}.conf"
-            logger.info(f"Попытка отправить файл: {config_file_path}")
             if os.path.exists(config_file_path):
-                # Используем InputFile для отправки файла
+                # Use InputFile to send the document
                 document = InputFile(config_file_path)
-                logger.info(f"Файл найден, отправка документа: {document}")
-                await bot.send_document(user_id, document, caption="📂 Ваш конфиг VPN")
+                await bot.send_document(
+                    chat_id=user_id,
+                    document=document,
+                    caption="📂 Ваш конфиг VPN"
+                )
             else:
-                logger.error(f"Файл не найден: {config_file_path}")
+                logger.error(f"Config file not found: {config_file_path}")
                 await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
         else:
-            logger.error(f"Конфигурация не найдена: config_id={config_id}")
+            logger.error(f"Config not found: config_id={config_id}")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
     except Exception as e:
-        logger.error(f"Ошибка отправки конфигурации: {e}")
+        logger.error(f"Error sending config: {e}")
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
 @router.callback_query(lambda c: c.data.startswith('download_'))
