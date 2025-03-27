@@ -54,7 +54,6 @@ async def buy_vpn(callback: CallbackQuery):
     await callback.answer()
 
 @router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
-@router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
@@ -112,34 +111,30 @@ async def handle_config(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def send_config(user_id, config_id):
     try:
-        # Получаем конфигурацию из базы данных
+        logger.info(f"Начало отправки конфига: user_id={user_id}, config_id={config_id}")
+        
         config = db.get_config(config_id)
         if not config:
+            logger.error(f"Конфиг не найден: user_id={user_id}, config_id={config_id}")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        # Получаем все конфиги пользователя
         configs = db.get_configs(user_id)
+        config_number = next((i for i, c in enumerate(configs, 1) if c['config_id'] == config_id)
         
-        # Находим порядковый номер конфига
-        config_number = 1
-        for i, conf in enumerate(configs, start=1):
-            if conf['config_id'] == config_id:
-                config_number = i
-                break
-
-        # Формируем путь к файлу конфигурации
+        logger.info(f"Номер конфига: {config_number}")
+        
         config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
+        logger.info(f"Путь к файлу: {config_file_path}")
         
-        # Проверяем существование файла
         if not os.path.exists(config_file_path):
-            logger.error(f"Файл конфигурации не найден: {config_file_path}")
+            logger.error(f"Файл не существует: {config_file_path}")
             await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
             return
 
-        # Читаем и отправляем файл
         with open(config_file_path, 'rb') as file:
             file_content = file.read()
+            logger.info(f"Размер файла: {len(file_content)} байт")
             
             await bot.send_document(
                 chat_id=user_id,
@@ -149,20 +144,22 @@ async def send_config(user_id, config_id):
                 ),
                 caption=f"📂 Ваш конфиг VPN (#{config_number})"
             )
-            logger.info(f"Конфиг #{config_number} успешно отправлен пользователю {user_id}")
+            logger.info(f"Конфиг успешно отправлен: user_id={user_id}, config_id={config_id}")
 
     except Exception as e:
-        logger.error(f"Ошибка отправки конфигурации: {str(e)}", exc_info=True)
-        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
-    except Exception as e:
-        logger.error(f"Ошибка отправки конфигурации: {e}")
+        logger.error(f"Критическая ошибка: {str(e)}", exc_info=True)
         await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
+# Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
-    config_id = int(callback.data.split('_')[1])
-    await send_config(callback.from_user.id, config_id)
-    await callback.answer("✅ Конфигурация отправлена.")
+    try:
+        config_id = int(callback.data.split('_')[1])
+        await send_config(callback.from_user.id, config_id)
+        await callback.answer("✅ Конфигурация отправлена.")
+    except (IndexError, ValueError) as e:
+        logger.error(f"Ошибка обработки download: {callback.data} - {str(e)}")
+        await callback.answer("❌ Ошибка при обработке запроса.")
 
 @router.callback_query(lambda c: c.data.startswith('extend_'))
 async def handle_extend(callback: CallbackQuery):
