@@ -111,55 +111,44 @@ async def handle_config(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def send_config(user_id, config_id):
     try:
-        logger.info(f"Начало отправки конфига: user_id={user_id}, config_id={config_id}")
-        
         config = db.get_config(config_id)
         if not config:
-            logger.error(f"Конфиг не найден: user_id={user_id}, config_id={config_id}")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
+        # Получаем номер конфига
         configs = db.get_configs(user_id)
-        config_number = next((i for i, c in enumerate(configs, 1) if c['config_id'] == config_id)
+        config_number = next(i for i, c in enumerate(configs, 1) if c['config_id'] == config_id)
         
-        logger.info(f"Номер конфига: {config_number}")
-        
+        # Формируем путь к файлу
         config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
-        logger.info(f"Путь к файлу: {config_file_path}")
         
-        if not os.path.exists(config_file_path):
-            logger.error(f"Файл не существует: {config_file_path}")
-            await bot.send_message(user_id, "❌ Конфигурационный файл не найден.")
-            return
-
+        # Отправка файла
         with open(config_file_path, 'rb') as file:
-            file_content = file.read()
-            logger.info(f"Размер файла: {len(file_content)} байт")
-            
             await bot.send_document(
                 chat_id=user_id,
                 document=types.BufferedInputFile(
-                    file_content,
+                    file.read(),
                     filename=f"vpn_config_{user_id}_{config_number}.conf"
                 ),
                 caption=f"📂 Ваш конфиг VPN (#{config_number})"
             )
-            logger.info(f"Конфиг успешно отправлен: user_id={user_id}, config_id={config_id}")
-
+            
     except Exception as e:
-        logger.error(f"Критическая ошибка: {str(e)}", exc_info=True)
-        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
+        logger.error(f"Ошибка: {str(e)}")
+        await bot.send_message(user_id, "❌ Ошибка при отправке файла")
 
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
     try:
+        # Извлекаем config_id из callback.data (пример: "download_123")
         config_id = int(callback.data.split('_')[1])
         await send_config(callback.from_user.id, config_id)
-        await callback.answer("✅ Конфигурация отправлена.")
+        await callback.answer("✅ Конфигурация отправлена")
     except (IndexError, ValueError) as e:
-        logger.error(f"Ошибка обработки download: {callback.data} - {str(e)}")
-        await callback.answer("❌ Ошибка при обработке запроса.")
+        logger.error(f"Ошибка обработки запроса: {callback.data} - {str(e)}")
+        await callback.answer("❌ Ошибка при обработке запроса")
 
 @router.callback_query(lambda c: c.data.startswith('extend_'))
 async def handle_extend(callback: CallbackQuery):
