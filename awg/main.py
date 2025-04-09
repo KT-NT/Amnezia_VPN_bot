@@ -124,39 +124,55 @@ async def handle_config(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def send_config(user_id, config_id):
     try:
+        logger.info(f"Попытка отправки конфига {config_id} для пользователя {user_id}")
+        
+        # Получаем конфигурацию из БД
         config = db.get_config(config_id)
         if not config:
+            logger.error(f"Конфиг {config_id} не найден в базе данных")
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        # Исправленный путь с учетом config_id
+        # Формируем путь к файлу с учетом config_id
         config_file_path = f"./users/{user_id}/{user_id}_{config_id}.conf"
-        
-        if os.path.exists(config_file_path):
-            with open(config_file_path, "r") as f:
-                config_content = f.read()
+        logger.info(f"Проверяем путь: {config_file_path}")
 
-            # Отправка содержимого
-            max_length = 4000
-            parts = [config_content[i:i+max_length] for i in range(0, len(config_content), max_length)]
+        # Проверяем существование файла
+        if not os.path.exists(config_file_path):
+            logger.error(f"Файл {config_file_path} не существует")
+            await bot.send_message(user_id, "❌ Файл конфигурации не найден.")
+            return
 
+        # Читаем содержимое файла
+        with open(config_file_path, "r") as f:
+            config_content = f.read()
+            logger.info(f"Прочитано {len(config_content)} символов")
+
+        # Разбиваем на части по 4000 символов
+        max_length = 4000
+        parts = [config_content[i:i+max_length] for i in range(0, len(config_content), max_length)]
+
+        # Отправляем части пользователю
+        try:
             # Первая часть с инструкцией
             await bot.send_message(
                 user_id,
-                f"⚠️ Сохраните этот текст в файл с расширением .conf\n\n{parts[0]}"
+                f"⚠️ Сохраните этот текст в файл с расширением .conf:\n\n{parts[0]}"
             )
+            logger.info("Первая часть конфига отправлена")
 
             # Остальные части
-            for part in parts[1:]:
+            for i, part in enumerate(parts[1:], 2):
                 await bot.send_message(user_id, part)
-                
-        else:
-            await bot.send_message(user_id, f"❌ Файл не найден: {config_file_path}")
-            
-    except Exception as e:
-        logger.error(f"Ошибка отправки конфигурации: {e}", exc_info=True)
-        await bot.send_message(user_id, "❌ Произошла ошибка при отправке.")
+                logger.info(f"Часть {i} отправлена")
 
+        except Exception as e:
+            logger.error(f"Ошибка при отправке: {str(e)}")
+            await bot.send_message(user_id, "❌ Ошибка отправки конфигурации.")
+
+    except Exception as e:
+        logger.error(f"Критическая ошибка: {str(e)}", exc_info=True)
+        await bot.send_message(user_id, "❌ Внутренняя ошибка сервера.")
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
