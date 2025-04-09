@@ -120,7 +120,24 @@ async def handle_config(callback: CallbackQuery):
     )
 
 @router.callback_query(lambda c: c.data.startswith('delete_'))
+async def handle_delete(callback: CallbackQuery):
+    config_id = int(callback.data.split('_')[1])
+    config = db.get_config(config_id)
 
+    if config:
+        try:
+            subprocess.run(
+                ["./removeclient.sh", str(config['user_id']), "your_public_key", WG_CONFIG_FILE, DOCKER_CONTAINER],
+                check=True
+            )
+            db.delete_config(config_id)
+            await callback.answer("✅ Конфигурация удалена.")
+            await handle_account(callback)  # Обновляем список конфигураций
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Ошибка при удалении VPN-конфигурации: {e}")
+            await callback.answer("❌ Ошибка при удалении конфигурации.")
+    else:
+        await callback.answer("❌ Конфигурация не найдена.")
 
 @router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
