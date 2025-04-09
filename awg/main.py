@@ -225,6 +225,22 @@ async def handle_back_to_config(callback: CallbackQuery):
         await callback.answer("❌ Некорректный идентификатор конфигурации.")
         logger.error(f"Неверный формат config_id: {callback.data}")
 
+@router.callback_query(lambda c: c.data == "channel")
+async def handle_channel(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📢 Присоединяйтесь к нашему официальному каналу:",
+        reply_markup=channel_menu()
+    )
+    await callback.answer()
+
+@router.callback_query(lambda c: c.data == "support")
+async def handle_support(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "🆘 По всем вопросам обращайтесь к администратору:",
+        reply_markup=support_menu()
+    )
+    await callback.answer()
+
 @router.callback_query(lambda c: c.data.startswith("back_to_main"))
 async def handle_back_main(callback: CallbackQuery):
     await callback.message.edit_text("Главное меню:", reply_markup=main_menu())
