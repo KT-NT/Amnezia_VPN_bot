@@ -412,6 +412,7 @@ class Database:
                 balance INTEGER DEFAULT 0
             )
         """)
+        # В методе create_tables() класса Database:
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS configs (
                 config_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,6 +420,7 @@ class Database:
                 duration INTEGER,
                 port INTEGER,
                 end_date TEXT,
+                encoded_config TEXT,
                 FOREIGN KEY (user_id) REFERENCES users(user_id)
             )
         """)
@@ -447,17 +449,13 @@ class Database:
             self.cursor.execute("UPDATE users SET balance = balance + ? WHERE user_id = ?", (amount, user_id))
             self.conn.commit()
 
-    def add_config(self, user_id, duration, port):
-        """
-        Добавляет новую конфигурацию VPN для пользователя.
-        duration – длительность подписки (в месяцах).
-        port – выбранный порт.
-        """
+    def add_config(self, user_id, duration, port, encoded_config):
         end_date = (datetime.now() + timedelta(days=duration * 30)).strftime("%Y-%m-%d")
         self.cursor.execute("""
-            INSERT INTO configs (user_id, duration, port, end_date) 
-            VALUES (?, ?, ?, ?)
-        """, (user_id, duration, port, end_date))
+            INSERT INTO configs 
+            (user_id, duration, port, end_date, encoded_config) 
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, duration, port, end_date, encoded_config))
         self.conn.commit()
         return self.cursor.lastrowid
 
