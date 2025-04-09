@@ -67,28 +67,28 @@ async def buy_vpn(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
-    duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
-    price = {1: 100, 2: 180, 3: 260}[duration]  # Стоимость подписки
+    duration = int(callback.data.split('_')[0])
+    price = {1: 100, 2: 180, 3: 260}[duration]
 
     if db.get_balance(user_id) >= price:
         port = random.randint(10000, 65535)
         config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
 
-        # Получаем количество конфигов у пользователя
-        configs = db.get_configs(user_id)
-        config_number = len(configs)  # Номер текущего конфига
-
         try:
+            # Создаем конфиг без отправки
             subprocess.run(
-                ["./newclient.sh", str(user_id), str(config_number), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
+                ["./newclient.sh", str(user_id), str(config_id), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
                 check=True
             )
-            await send_config(user_id, config_id)
-            await callback.message.edit_text(f"✅ Подписка на {duration} месяц(ев) активирована!", reply_markup=None)
+            await callback.message.edit_text(
+                f"✅ Подписка на {duration} месяц(ев) успешно активирована!\n"
+                "Вы можете управлять конфигурацией в разделе «Профиль»",
+                reply_markup=main_menu()
+            )
         except subprocess.CalledProcessError as e:
-            logger.error(f"Ошибка при создании VPN-конфигурации: {e}")
-            await callback.message.edit_text("❌ Ошибка при создании VPN.", reply_markup=None)
+            logger.error(f"Ошибка создания конфига: {e}")
+            await callback.message.edit_text("❌ Ошибка при активации подписки")
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
 
