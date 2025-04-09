@@ -116,28 +116,29 @@ async def send_config(user_id, config_id):
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        config_file_path = f"./users/{user_id}/{user_id}.conf"
+        # Исправленный путь к файлу с суффиксом _1
+        config_file_path = f"./users/{user_id}/{user_id}_{config_id}.conf"
         
         if os.path.exists(config_file_path):
             with open(config_file_path, "r") as f:
                 config_content = f.read()
 
-            # Отправляем текст как есть
-            max_length = 4000  # Лимит Telegram
+            # Отправка текста
+            max_length = 4000
             parts = [config_content[i:i+max_length] for i in range(0, len(config_content), max_length)]
 
             # Первое сообщение с инструкцией
             await bot.send_message(
                 user_id,
-                "Содержимое конфигурации:\n\n" + parts[0]
+                "⚠️ Сохраните этот текст в файл с расширением .conf\n\n" + parts[0]
             )
 
-            # Остальные части
+            # Отправка остальных частей
             for part in parts[1:]:
                 await bot.send_message(user_id, part)
                 
         else:
-            await bot.send_message(user_id, "❌ Файл конфигурации не найден.")
+            await bot.send_message(user_id, f"❌ Файл конфигурации не найден по пути: {config_file_path}")
             
     except Exception as e:
         logger.error(f"Ошибка отправки конфигурации: {e}")
