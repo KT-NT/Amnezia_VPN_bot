@@ -5,6 +5,10 @@ def main_menu():
         [InlineKeyboardButton(text="🔥Купить VPN", callback_data="buy_vpn")],
         [InlineKeyboardButton(text="👤Пополнить баланс", callback_data="replenish")],
         [InlineKeyboardButton(text="💳Профиль", callback_data="account")]
+        [
+            InlineKeyboardButton(text="📢 Наш канал", callback_data="channel"),
+            InlineKeyboardButton(text="🆘 Поддержка", callback_data="support")
+        ]
     ])
 
 def subscription_options(config_id=None):
@@ -62,3 +66,15 @@ def config_actions(config_id):
     ]
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def channel_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Перейти в канал", url="https://t.me/your_channel")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+    ])
+
+def support_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Написать админу", url="https://t.me/your_admin")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+    ])
