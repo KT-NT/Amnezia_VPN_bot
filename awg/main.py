@@ -175,15 +175,39 @@ async def send_config(user_id, config_id):
         await bot.send_message(user_id, "❌ Внутренняя ошибка сервера.")
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
+@router.callback_query(lambda c: c.data.startswith('download_'))
 async def handle_download(callback: CallbackQuery):
+    """Обработчик кнопки скачивания"""
+    config_id = int(callback.data.split('_')[1])
+    await _send_config_file(callback.from_user.id, config_id)
+    await callback.answer("✅ Файл отправлен")
+
+async def _send_config_file(user_id: int, config_id: int):
+    """Отправляет файл конфигурации"""
     try:
-        # Извлекаем config_id из callback.data (пример: "download_123")
-        config_id = int(callback.data.split('_')[1])
-        await send_config(callback.from_user.id, config_id)
-        await callback.answer("✅ Конфигурация отправлена")
-    except (IndexError, ValueError) as e:
-        logger.error(f"Ошибка обработки запроса: {callback.data} - {str(e)}")
-        await callback.answer("❌ Ошибка при обработке запроса")
+        # Проверка существования конфига в БД
+        config = db.get_config(config_id)
+        if not config:
+            await bot.send_message(user_id, "❌ Конфигурация не найдена")
+            return
+
+        # Формирование пути к файлу
+        file_path = f"./users/{user_id}/{user_id}_{config_id}.conf"
+        
+        if not os.path.exists(file_path):
+            await bot.send_message(user_id, "❌ Файл конфигурации отсутствует")
+            return
+
+        # Отправка файла
+        await bot.send_document(
+            chat_id=user_id,
+            document=types.FSInputFile(file_path),
+            caption=f"🔑 Конфигурация #{config_id}\nСрок действия: {config['end_date']}"
+        )
+
+    except Exception as e:
+        logger.error(f"Ошибка отправки файла: {str(e)}")
+        await bot.send_message(user_id, "❌ Ошибка при отправке файла")
 
 @router.callback_query(lambda c: c.data.startswith('extend_'))
 async def handle_extend(callback: CallbackQuery):
