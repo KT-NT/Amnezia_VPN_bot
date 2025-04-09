@@ -52,10 +52,18 @@ async def handle_start(message: Message):
     await message.answer("Добро пожаловать!", reply_markup=main_menu())
 
 @router.callback_query(lambda c: c.data == "replenish")
+@router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
-    db.update_balance(user_id, 100)  # Пополнение на 100 руб.
-    await callback.message.edit_text("✅ Баланс пополнен на 100 руб.")
+    db.update_balance(user_id, 100)
+    await callback.message.edit_text(
+        "✅ Баланс пополнен на 100 руб.",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+            ]
+        )
+    )
     await callback.answer()
 
 @router.callback_query(lambda c: c.data == "buy_vpn")
@@ -98,7 +106,14 @@ async def handle_account(callback: CallbackQuery):
     configs = db.get_configs(user_id)
 
     if not configs:
-        await callback.message.edit_text("У вас нет активных конфигураций.", reply_markup=None)
+        await callback.message.edit_text(
+            "У вас нет активных конфигураций.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+                ]
+            )
+        )
         return
 
     keyboard = configs_menu(configs)
