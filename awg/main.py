@@ -132,20 +132,18 @@ async def handle_download(callback: CallbackQuery):
 async def _send_config_file(user_id: int, config_id: int):
     """Отправляет файл конфигурации"""
     try:
-        # Проверка существования конфига в БД
         config = db.get_config(config_id)
         if not config:
             await bot.send_message(user_id, "❌ Конфигурация не найдена")
             return
 
-        # Формирование пути к файлу
+        # Исправленный путь к файлу
         file_path = f"./users/{user_id}/{user_id}_{config_id}.conf"
         
         if not os.path.exists(file_path):
             await bot.send_message(user_id, "❌ Файл конфигурации отсутствует")
             return
 
-        # Отправка файла
         await bot.send_document(
             chat_id=user_id,
             document=types.FSInputFile(file_path),
