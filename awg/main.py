@@ -116,27 +116,32 @@ async def send_config(user_id, config_id):
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        # Получаем номер конфига
-        configs = db.get_configs(user_id)
-        config_number = next(i for i, c in enumerate(configs, 1) if c['config_id'] == config_id)
+        config_file_path = f"./users/{user_id}/{user_id}.conf"
         
-        # Формируем путь к файлу
-        config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
-        
-        # Отправка файла
-        with open(config_file_path, 'rb') as file:
-            await bot.send_document(
-                chat_id=user_id,
-                document=types.BufferedInputFile(
-                    file.read(),
-                    filename=f"vpn_config_{user_id}_{config_number}.conf"
-                ),
-                caption=f"📂 Ваш конфиг VPN (#{config_number})"
+        if os.path.exists(config_file_path):
+            with open(config_file_path, "r") as f:
+                config_content = f.read()
+
+            # Отправляем текст как есть
+            max_length = 4000  # Лимит Telegram
+            parts = [config_content[i:i+max_length] for i in range(0, len(config_content), max_length)]
+
+            # Первое сообщение с инструкцией
+            await bot.send_message(
+                user_id,
+                "Содержимое конфигурации:\n\n" + parts[0]
             )
+
+            # Остальные части
+            for part in parts[1:]:
+                await bot.send_message(user_id, part)
+                
+        else:
+            await bot.send_message(user_id, "❌ Файл конфигурации не найден.")
             
     except Exception as e:
-        logger.error(f"Ошибка: {str(e)}")
-        await bot.send_message(user_id, "❌ Ошибка при отправке файла")
+        logger.error(f"Ошибка отправки конфигурации: {e}")
+        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
 
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
