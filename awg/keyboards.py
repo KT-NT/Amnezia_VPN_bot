@@ -6,9 +6,29 @@ def main_menu():
         [InlineKeyboardButton(text="👤 Пополнить баланс", callback_data="replenish")],
         [InlineKeyboardButton(text="💳 Профиль", callback_data="account")],
         [InlineKeyboardButton(text="📢 Наш канал", callback_data="channel")],
-        [InlineKeyboardButton(text="🆘 Поддержка", callback_data="support")]
+        [InlineKeyboardButton(text="🆘 Поддержка", callback_data="support")],
+        [InlineKeyboardButton(text="📲 Как установить", callback_data="install_guide")]
     ])
 
+def install_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="iPhone", callback_data="install_ios")],
+        [InlineKeyboardButton(text="Android", callback_data="install_android")],
+        [InlineKeyboardButton(text="ПК", callback_data="install_pc")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+    ])
+
+def platform_guide_menu(platform: str):
+    guide_links = {
+        "ios": "https://example.com/ios-guide",
+        "android": "https://example.com/android-guide",
+        "pc": "https://example.com/pc-guide"
+    }
+    
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📖 Гайд по установке", url=guide_links[platform])],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_install")]
+    ])
 def subscription_options(config_id=None):
     """Варианты подписки"""
     if config_id:
