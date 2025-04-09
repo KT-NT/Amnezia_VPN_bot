@@ -17,7 +17,7 @@ from aiogram.types import InputFile
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-TOKEN = '8005821803:AAG5oLy-BhqKyvfEgNnMgeYfDKCNvsIGIQU'
+TOKEN = '8005821803:AAHIZq0pPj8SBlnWT30m_kknu0lnwjIUWHo'
 
 db = Database()
 bot = Bot(token=TOKEN)
