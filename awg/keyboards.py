@@ -5,10 +5,8 @@ def main_menu():
         [InlineKeyboardButton(text="🔥Купить VPN", callback_data="buy_vpn")],
         [InlineKeyboardButton(text="👤Пополнить баланс", callback_data="replenish")],
         [InlineKeyboardButton(text="💳Профиль", callback_data="account")]
-        [
-            InlineKeyboardButton(text="📢 Наш канал", callback_data="channel"),
-            InlineKeyboardButton(text="🆘 Поддержка", callback_data="support")
-        ]
+        [InlineKeyboardButton(text="📢 Наш канал", callback_data="channel")]
+        [InlineKeyboardButton(text="🆘 Поддержка", callback_data="support")]
     ])
 
 def subscription_options(config_id=None):
