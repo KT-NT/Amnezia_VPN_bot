@@ -17,6 +17,19 @@ from aiogram.types import InputFile
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 TOKEN = '8005821803:AAHIZq0pPj8SBlnWT30m_kknu0lnwjIUWHo'
 
 db = Database()
@@ -116,33 +129,33 @@ async def send_config(user_id, config_id):
             await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        # Исправленный путь к файлу с суффиксом _1
+        # Исправленный путь с учетом config_id
         config_file_path = f"./users/{user_id}/{user_id}_{config_id}.conf"
         
         if os.path.exists(config_file_path):
             with open(config_file_path, "r") as f:
                 config_content = f.read()
 
-            # Отправка текста
+            # Отправка содержимого
             max_length = 4000
             parts = [config_content[i:i+max_length] for i in range(0, len(config_content), max_length)]
 
-            # Первое сообщение с инструкцией
+            # Первая часть с инструкцией
             await bot.send_message(
                 user_id,
-                "⚠️ Сохраните этот текст в файл с расширением .conf\n\n" + parts[0]
+                f"⚠️ Сохраните этот текст в файл с расширением .conf\n\n{parts[0]}"
             )
 
-            # Отправка остальных частей
+            # Остальные части
             for part in parts[1:]:
                 await bot.send_message(user_id, part)
                 
         else:
-            await bot.send_message(user_id, f"❌ Файл конфигурации не найден по пути: {config_file_path}")
+            await bot.send_message(user_id, f"❌ Файл не найден: {config_file_path}")
             
     except Exception as e:
-        logger.error(f"Ошибка отправки конфигурации: {e}")
-        await bot.send_message(user_id, "❌ Произошла ошибка при отправке конфигурации.")
+        logger.error(f"Ошибка отправки конфигурации: {e}", exc_info=True)
+        await bot.send_message(user_id, "❌ Произошла ошибка при отправке.")
 
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
