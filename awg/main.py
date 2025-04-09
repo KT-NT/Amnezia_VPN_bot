@@ -56,27 +56,30 @@ async def buy_vpn(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
-    duration = int(callback.data.split('_')[0])
-    price = {1: 100, 2: 180, 3: 260}[duration]
+    duration = int(callback.data.split('_')[0])  # 1, 2 или 3 месяца
+    price = {1: 100, 2: 180, 3: 260}[duration]  # Стоимость подписки
 
     if db.get_balance(user_id) >= price:
         port = random.randint(10000, 65535)
-        
-        # Генерируем конфиг
-        config_content = f"""... ваш стандартный конфиг ...""" 
-        
-        # Кодируем конфиг
-        import zlib, base64
-        compressed = zlib.compress(config_content.encode())
-        encoded_config = base64.urlsafe_b64encode(compressed).decode()
-        
-        # Сохраняем в БД
-        config_id = db.add_config(user_id, duration, port, encoded_config)
+        config_id = db.add_config(user_id, duration, port)
         db.update_balance(user_id, -price)
-        
-        # Отправляем
-        await send_config(user_id, config_id)
-        await callback.message.edit_text(f"✅ Подписка активирована!")
+
+        # Получаем количество конфигов у пользователя
+        configs = db.get_configs(user_id)
+        config_number = len(configs)  # Номер текущего конфига
+
+        try:
+            subprocess.run(
+                ["./newclient.sh", str(user_id), str(config_number), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
+                check=True
+            )
+            await send_config(user_id, config_id)
+            await callback.message.edit_text(f"✅ Подписка на {duration} месяц(ев) активирована!", reply_markup=None)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Ошибка при создании VPN-конфигурации: {e}")
+            await callback.message.edit_text("❌ Ошибка при создании VPN.", reply_markup=None)
+    else:
+        await callback.answer("❌ Недостаточно средств на балансе.")
 
 @router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
@@ -110,21 +113,30 @@ async def send_config(user_id, config_id):
     try:
         config = db.get_config(config_id)
         if not config:
-            await bot.send_message(user_id, "❌ Конфиг не найден")
+            await bot.send_message(user_id, "❌ Конфигурация не найдена.")
             return
 
-        vpn_url = f"vpn://{config['encoded_config']}"
+        # Получаем номер конфига
+        configs = db.get_configs(user_id)
+        config_number = next(i for i, c in enumerate(configs, 1) if c['config_id'] == config_id)
         
-        await bot.send_message(
-            chat_id=user_id,
-            text=f"<b>🔑 Ваша VPN-ссылка:</b>\n<code>{vpn_url}</code>\n\n"
-                 "1. Скопируйте всю строку\n"
-                 "2. Вставьте в приложение VPN",
-            parse_mode="HTML"
-        )
+        # Формируем путь к файлу
+        config_file_path = f"./users/{user_id}/{user_id}_{config_number}.conf"
+        
+        # Отправка файла
+        with open(config_file_path, 'rb') as file:
+            await bot.send_document(
+                chat_id=user_id,
+                document=types.BufferedInputFile(
+                    file.read(),
+                    filename=f"vpn_config_{user_id}_{config_number}.conf"
+                ),
+                caption=f"📂 Ваш конфиг VPN (#{config_number})"
+            )
+            
     except Exception as e:
         logger.error(f"Ошибка: {str(e)}")
-        await bot.send_message(user_id, "❌ Ошибка отправки")
+        await bot.send_message(user_id, "❌ Ошибка при отправке файла")
 
 # Исправленный обработчик для скачивания конфига
 @router.callback_query(lambda c: c.data.startswith('download_'))
