@@ -72,6 +72,31 @@ async def buy_vpn(callback: CallbackQuery):
     await callback.message.edit_text("💰 Выберите срок подписки:", reply_markup=subscription_options())
     await callback.answer()
 
+@router.callback_query(lambda c: c.data == "install_guide")
+async def handle_install_guide(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📲 Выберите ваше устройство:",
+        reply_markup=install_menu()
+    )
+    await callback.answer()
+
+@router.callback_query(lambda c: c.data.startswith("install_"))
+async def handle_install_platform(callback: CallbackQuery):
+    platform = callback.data.split("_")[1]
+    await callback.message.edit_text(
+        f"🔧 Руководство для {platform.upper()}:",
+        reply_markup=platform_guide_menu(platform)
+    )
+    await callback.answer()
+
+@router.callback_query(lambda c: c.data == "back_to_install")
+async def handle_back_to_install(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📲 Выберите ваше устройство:",
+        reply_markup=install_menu()
+    )
+    await callback.answer()
+
 @router.callback_query(lambda c: c.data in ['1_month', '2_months', '3_months'])
 async def handle_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
