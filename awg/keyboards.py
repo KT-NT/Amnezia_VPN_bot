@@ -72,9 +72,10 @@ def channel_menu():
         [InlineKeyboardButton(text="Перейти в канал", url="https://t.me/your_channel")],
         [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
     ])
-
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 def support_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Написать админу", url="https://t.me/your_admin")],
         [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
     ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
