@@ -50,23 +50,21 @@ async def handle_start(message: Message):
     logo_path = "logo.png"
     try:
         if os.path.exists(logo_path):
-            photo = FSInputFile(logo_path)
             await message.answer_photo(
-                photo=photo,
-                caption="👋 Добро пожаловать в *VPN Бот!*\n\nВыберите действие ниже:",
+                photo=FSInputFile(logo_path),
+                caption="👋 Добро пожаловать в *VPN Бот!*\n\nВыберите действие:",
                 parse_mode="Markdown",
                 reply_markup=main_menu()
             )
         else:
-            logger.warning("Файл логотипа не найден.")
             await message.answer(
-                "👋 Добро пожаловать в VPN Бот!\n\nВыберите действие ниже:",
+                "👋 Добро пожаловать в VPN Бот!\n\nВыберите действие:",
                 reply_markup=main_menu()
             )
     except Exception as e:
-        logger.error(f"Ошибка при отправке логотипа: {e}")
+        logger.error(f"Ошибка: {e}")
         await message.answer(
-            "👋 Добро пожаловать в VPN Бот!\n\nВыберите действие ниже:",
+            "👋 Добро пожаловать!\n\nВыберите действие:",
             reply_markup=main_menu()
         )
         
