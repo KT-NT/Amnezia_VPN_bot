@@ -143,10 +143,8 @@ async def handle_subscription(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
-    await callback.answer()
     user_id = callback.from_user.id
     configs = db.get_configs(user_id)
-
     if not configs:
         await callback.message.edit_text(
             "У вас нет активных конфигураций.",
