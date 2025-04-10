@@ -47,22 +47,23 @@ async def handle_start(message: Message):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
 
-    logo_path = "logo.png"
-    if os.path.exists(logo_path):
-        photo = FSInputFile(logo_path)
-        await message.answer_photo(
-            photo=photo,
-            caption="👋 Добро пожаловать в *VPN Бот!*\n\nВыберите действие ниже 👇",
-            reply_markup=main_menu(),
-            #parse_mode="Markdown"
-        )
-    else:
-        await message.answer(
-            "👋 Добро пожаловать в *VPN Бот!*",
-            reply_markup=main_menu(),
-            #parse_mode="Markdown"
-        )
+    logo_path = "logo.png"  # Убедись, что путь правильный
+    try:
+        if os.path.exists(logo_path):
+            photo = FSInputFile(logo_path)
+            await message.answer_photo(
+                photo=photo,
+                caption="👋 Добро пожаловать в *VPN Бот!*",
+                parse_mode="Markdown"
+            )
+        else:
+            logger.warning("Файл логотипа не найден.")
+            await message.answer("👋 Добро пожаловать в VPN Бот!")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке логотипа: {e}")
+        await message.answer("⚠️ Не удалось загрузить логотип.")
 
+    await message.answer("Выберите действие ниже:", reply_markup=main_menu())
 
 @router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
