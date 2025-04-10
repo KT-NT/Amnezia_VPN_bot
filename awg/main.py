@@ -49,7 +49,21 @@ async def handle_start(message: Message):
     if not db.user_exists(user_id):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
-    await message.answer("Добро пожаловать!", reply_markup=main_menu())
+
+    # Путь к логотипу
+    logo_path = "logo.png"
+    if os.path.exists(logo_path):
+        await message.answer_photo(
+            photo=InputFile(logo_path),
+            caption="👋 Добро пожаловать в *VPN Бот!*",
+            parse_mode="Markdown"
+        )
+    else:
+        logger.warning("Логотип не найден, отправляется текстовое приветствие.")
+        await message.answer("👋 Добро пожаловать в VPN Бот!")
+
+    await message.answer("Выберите действие ниже:", reply_markup=main_menu())
+
 
 @router.callback_query(lambda c: c.data == "replenish")
 @router.callback_query(lambda c: c.data == "replenish")
