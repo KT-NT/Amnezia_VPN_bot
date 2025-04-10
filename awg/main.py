@@ -13,10 +13,6 @@ from keyboards import *
 import logging 
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
 
 # Настройка логирования
 logging.basicConfig(
@@ -58,13 +54,13 @@ async def handle_start(message: Message):
             photo=photo,
             caption="👋 Добро пожаловать в *VPN Бот!*\n\nВыберите действие ниже 👇",
             reply_markup=main_menu(),
-            parse_mode="Markdown"
+            #parse_mode="Markdown"
         )
     else:
         await message.answer(
             "👋 Добро пожаловать в *VPN Бот!*",
             reply_markup=main_menu(),
-            parse_mode="Markdown"
+            #parse_mode="Markdown"
         )
 
 
