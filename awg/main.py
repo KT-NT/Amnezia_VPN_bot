@@ -28,8 +28,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = '8005821803:AAHIZq0pPj8SBlnWT30m_kknu0lnwjIUWHo'
-
+TOKEN = '8005821803:AAGR2iCDnC4j7JVHSYtJqkn1Lrok5seQVk0'
+logo = InputFile("logo.png")
 db = Database()
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -49,7 +49,7 @@ async def handle_start(message: Message):
     if not db.user_exists(user_id):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
-    await message.answer("Добро пожаловать!", reply_markup=main_menu())
+    await message.answer(logo,"Добро пожаловать!", reply_markup=main_menu())
 
 @router.callback_query(lambda c: c.data == "replenish")
 @router.callback_query(lambda c: c.data == "replenish")
