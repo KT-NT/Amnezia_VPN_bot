@@ -39,7 +39,7 @@ dp.include_router(router)
 # Константы для сервера
 WG_CONFIG_FILE = "/opt/amnezia/awg/wg0.conf"  # Такие по дефолту
 DOCKER_CONTAINER = "amnezia-awg"  # Так же по дефолту 
-ENDPOINT = "85.192.27.245"  # Укажите правильный endpoint
+ENDPOINT = "89.208.97.144"  # Укажите правильный endpoint
 CURRENT_SERVER = None
 
 
