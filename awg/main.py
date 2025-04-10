@@ -6,11 +6,12 @@ from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
-from aiogram.types import InputFile
+from aiogram.types import InputFile, FSInputFile
 import asyncio
 from db import Database, SSHManager, load_servers, save_servers, add_server, remove_server, get_server_list
 from keyboards import *
-import logging
+import logging 
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,8 +44,6 @@ ENDPOINT = "89.208.97.144"  # Укажите правильный endpoint
 CURRENT_SERVER = None
 
 
-from aiogram.types import FSInputFile  # добавь если нет
-
 @router.message(Command("start"))
 async def handle_start(message: Message):
     user_id = message.from_user.id
@@ -52,23 +51,22 @@ async def handle_start(message: Message):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
 
-    logo_path = "logo.png"  # Убедись, что путь правильный
-    try:
-        if os.path.exists(logo_path):
-            photo = FSInputFile(logo_path)
-            await message.answer_photo(
-                photo=photo,
-                caption="👋 Добро пожаловать в *VPN Бот!*",
-                parse_mode="Markdown"
-            )
-        else:
-            logger.warning("Файл логотипа не найден.")
-            await message.answer("👋 Добро пожаловать в VPN Бот!")
-    except Exception as e:
-        logger.error(f"Ошибка при отправке логотипа: {e}")
-        await message.answer("⚠️ Не удалось загрузить логотип.")
+    logo_path = "logo.png"
+    if os.path.exists(logo_path):
+        photo = FSInputFile(logo_path)
+        await message.answer_photo(
+            photo=photo,
+            caption="👋 Добро пожаловать в *VPN Бот!*\n\nВыберите действие ниже 👇",
+            reply_markup=main_menu(),
+            parse_mode="Markdown"
+        )
+    else:
+        await message.answer(
+            "👋 Добро пожаловать в *VPN Бот!*",
+            reply_markup=main_menu(),
+            parse_mode="Markdown"
+        )
 
-    await message.answer("Выберите действие ниже:", reply_markup=main_menu())
 
 @router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
