@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = '8005821803:AAGR2iCDnC4j7JVHSYtJqkn1Lrok5seQVk0'
+TOKEN = '8005821803:AAEXCuPwTcWtBd3531C1hzY2BwlkF5PN_fg'
 
 db = Database()
 bot = Bot(token=TOKEN)
