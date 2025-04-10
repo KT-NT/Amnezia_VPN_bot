@@ -20,9 +20,9 @@ def install_menu():
 
 def platform_guide_menu(platform: str):
     guide_links = {
-        "🍏 ios": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "🤖 android": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "💻 pc": "https://docs.google.com/document/d/1Gm48o_J-9rNqUSZvWjCEM8kg1CCvIqwTJ8Y5QnaM7iA/edit?usp=sharing"
+        "ios": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "android": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "pc": "https://docs.google.com/document/d/1Gm48o_J-9rNqUSZvWjCEM8kg1CCvIqwTJ8Y5QnaM7iA/edit?usp=sharing"
     }
     
     return InlineKeyboardMarkup(inline_keyboard=[
