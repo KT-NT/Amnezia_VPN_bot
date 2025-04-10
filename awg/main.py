@@ -10,12 +10,12 @@ from aiogram.types import InputFile
 import asyncio
 from db import Database, SSHManager, load_servers, save_servers, add_server, remove_server, get_server_list
 from keyboards import *
-
+import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-import logging
+
 
 # Настройка логирования
 logging.basicConfig(
@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = '8005821803:AAGR2iCDnC4j7JVHSYtJqkn1Lrok5seQVk0'
-logo = InputFile("logo.png")
+
 db = Database()
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -37,8 +37,8 @@ router = Router()
 dp.include_router(router)
 
 # Константы для сервера
-WG_CONFIG_FILE = "/opt/amnezia/awg/wg0.conf"  # Укажите правильный путь
-DOCKER_CONTAINER = "amnezia-awg"  # Укажите правильное имя контейнера
+WG_CONFIG_FILE = "/opt/amnezia/awg/wg0.conf"  # Такие по дефолту
+DOCKER_CONTAINER = "amnezia-awg"  # Так же по дефолту 
 ENDPOINT = "85.192.27.245"  # Укажите правильный endpoint
 CURRENT_SERVER = None
 
@@ -49,7 +49,7 @@ async def handle_start(message: Message):
     if not db.user_exists(user_id):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
-    await message.answer(logo,"Добро пожаловать!", reply_markup=main_menu())
+    await message.answer("Добро пожаловать!", reply_markup=main_menu())
 
 @router.callback_query(lambda c: c.data == "replenish")
 @router.callback_query(lambda c: c.data == "replenish")
