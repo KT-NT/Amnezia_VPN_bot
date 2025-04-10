@@ -43,6 +43,8 @@ ENDPOINT = "85.192.27.245"  # Укажите правильный endpoint
 CURRENT_SERVER = None
 
 
+from aiogram.types import FSInputFile  # добавь если нет
+
 @router.message(Command("start"))
 async def handle_start(message: Message):
     user_id = message.from_user.id
@@ -50,22 +52,24 @@ async def handle_start(message: Message):
         db.add_user(user_id)
         logger.info(f"Новый пользователь: {user_id}")
 
-    # Путь к логотипу
-    logo_path = "logo.png"
-    if os.path.exists(logo_path):
-        await message.answer_photo(
-            photo=InputFile(logo_path),
-            caption="👋 Добро пожаловать в *VPN Бот!*",
-            parse_mode="Markdown"
-        )
-    else:
-        logger.warning("Логотип не найден, отправляется текстовое приветствие.")
-        await message.answer("👋 Добро пожаловать в VPN Бот!")
+    logo_path = "logo.png"  # Убедись, что путь правильный
+    try:
+        if os.path.exists(logo_path):
+            photo = FSInputFile(logo_path)
+            await message.answer_photo(
+                photo=photo,
+                caption="👋 Добро пожаловать в *VPN Бот!*",
+                parse_mode="Markdown"
+            )
+        else:
+            logger.warning("Файл логотипа не найден.")
+            await message.answer("👋 Добро пожаловать в VPN Бот!")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке логотипа: {e}")
+        await message.answer("⚠️ Не удалось загрузить логотип.")
 
     await message.answer("Выберите действие ниже:", reply_markup=main_menu())
 
-
-@router.callback_query(lambda c: c.data == "replenish")
 @router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
