@@ -72,7 +72,9 @@ async def handle_start(message: Message):
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
     db.update_balance(user_id, 100)
-    await callback.message.edit_text(
+    
+    # Используем answer вместо edit_text для сообщений с фото
+    await callback.message.answer(  # Изменено с edit_text на answer
         "✅ Баланс пополнен на 100 руб.",
         reply_markup=InlineKeyboardMarkup(
             inline_keyboard=[
