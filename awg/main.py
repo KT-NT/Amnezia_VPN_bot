@@ -73,16 +73,30 @@ async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
     db.update_balance(user_id, 100)
     
-    # Используем answer вместо edit_text для сообщений с фото
-    await callback.message.answer(  # Изменено с edit_text на answer
-        "✅ Баланс пополнен на 100 руб.",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
-            ]
+    try:
+        await bot.edit_message_caption(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            caption="✅ Баланс пополнен на 100 руб.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+                ]
+            )
         )
-    )
+    except Exception as e:
+        logger.error(f"Ошибка изменения подписи: {e}")
+        # Если произошла ошибка (например, сообщение не содержит фото), отправляем новое сообщение
+        await callback.message.answer(
+            "✅ Баланс пополнен на 100 руб.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+                ]
+            )
+        )
     await callback.answer()
+
 
 @router.callback_query(lambda c: c.data == "buy_vpn")
 async def buy_vpn(callback: CallbackQuery):
