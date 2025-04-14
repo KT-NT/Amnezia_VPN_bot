@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = '8005821803:AAEXCuPwTcWtBd3531C1hzY2BwlkF5PN_fg'
+TOKEN = '8005821803:AAG6ZfGFaw7Xheco4ANmTkYghh2ThR1OfDs'
 
 db = Database()
 bot = Bot(token=TOKEN)
@@ -100,8 +100,12 @@ async def handle_replenish(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "buy_vpn")
 async def buy_vpn(callback: CallbackQuery):
-    user_id = callback.from_user.id
-    await callback.message.edit_text("💰 Выберите срок подписки:", reply_markup=subscription_options())
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="💰 Выберите срок подписки:",
+        reply_markup=subscription_options()
+    )
     await callback.answer()
 
 @router.callback_query(lambda c: c.data == "install_guide")
