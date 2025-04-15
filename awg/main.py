@@ -40,7 +40,7 @@ ENDPOINT = "89.208.97.144"  # Укажите правильный endpoint
 CURRENT_SERVER = None
 
 
-@router.message(Command("start"))
+@router.message(Command("start")) #rab
 async def handle_start(message: Message):
     user_id = message.from_user.id
     if not db.user_exists(user_id):
@@ -68,37 +68,22 @@ async def handle_start(message: Message):
             reply_markup=main_menu()
         )
         
-@router.callback_query(lambda c: c.data == "replenish")
+@router.callback_query(lambda c: c.data == "replenish") #rab
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
     db.update_balance(user_id, 100)
     
-    try:
-        await bot.edit_message_caption(
-            chat_id=callback.message.chat.id,
-            message_id=callback.message.message_id,
-            caption="✅ Баланс пополнен на 100 руб.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
-                ]
-            )
+    await callback.message.answer(
+        "✅ Баланс пополнен на 100 руб.",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
+            ]
         )
-    except Exception as e:
-        logger.error(f"Ошибка изменения подписи: {e}")
-        # Если произошла ошибка (например, сообщение не содержит фото), отправляем новое сообщение
-        await callback.message.answer(
-            "✅ Баланс пополнен на 100 руб.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
-                ]
-            )
-        )
-    await callback.answer()
+    )
+    await callback.answer()  
 
-
-@router.callback_query(lambda c: c.data == "buy_vpn")
+@router.callback_query(lambda c: c.data == "buy_vpn") #раб
 async def buy_vpn(callback: CallbackQuery):
     await bot.edit_message_caption(
         chat_id=callback.message.chat.id,
@@ -110,22 +95,26 @@ async def buy_vpn(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "install_guide")
 async def handle_install_guide(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📲 Выберите ваше устройство:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="📲 Выберите ваше устройство:",
         reply_markup=install_menu()
     )
     await callback.answer()
 
-@router.callback_query(lambda c: c.data.startswith("install_"))
+@router.callback_query(lambda c: c.data.startswith("install_")) #arb
 async def handle_install_platform(callback: CallbackQuery):
     platform = callback.data.split("_")[1]
-    await callback.message.edit_text(
-        f"🔧 Руководство для {platform.upper()}:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption=f"🔧 Руководство для {platform.upper()}:",
         reply_markup=platform_guide_menu(platform)
     )
     await callback.answer()
 
-@router.callback_query(lambda c: c.data == "back_to_install")
+@router.callback_query(lambda c: c.data == "back_to_install") #rab
 async def handle_back_to_install(callback: CallbackQuery):
     await callback.message.edit_text(
         "📲 Выберите ваше устройство:",
