@@ -302,11 +302,14 @@ async def handle_back_to_config(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "channel")
 async def handle_channel(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📢 Присоединяйтесь к нашему официальному каналу:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="📢 Присоединяйтесь к нашему официальному каналу:",
         reply_markup=channel_menu()
     )
     await callback.answer()
+
 
 @router.callback_query(lambda c: c.data == "support")
 async def handle_support(callback: CallbackQuery):
