@@ -110,7 +110,7 @@ async def buy_vpn(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "install_guide")
 async def handle_install_guide(callback: CallbackQuery):
-    await callback.message.edit_text(
+    await bot.edit_message_caption(
         "📲 Выберите ваше устройство:",
         reply_markup=install_menu()
     )
