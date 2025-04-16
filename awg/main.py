@@ -155,8 +155,10 @@ async def handle_account(callback: CallbackQuery):
     user_id = callback.from_user.id
     configs = db.get_configs(user_id)
     if not configs:
-        await callback.message.edit_text(
-            "У вас нет активных конфигураций.",
+        await bot.edit_message_caption(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            caption="У вас нет активных конфигураций.",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
@@ -166,7 +168,12 @@ async def handle_account(callback: CallbackQuery):
         return
 
     keyboard = configs_menu(configs)
-    await callback.message.edit_text("Ваши активные конфигурации:", reply_markup=keyboard)
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="Ваши активные конфигурации:",
+        reply_markup=keyboard
+    )
 
 @router.callback_query(lambda c: c.data.startswith('config_'))
 async def handle_config(callback: CallbackQuery):
