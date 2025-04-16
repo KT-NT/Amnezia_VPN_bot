@@ -142,16 +142,26 @@ async def handle_subscription(callback: CallbackQuery):
                 ["./newclient.sh", str(user_id), str(config_id), ENDPOINT, WG_CONFIG_FILE, DOCKER_CONTAINER],
                 check=True
             )
-            await callback.message.edit_text(
-                f"✅ Подписка на {duration} месяц(ев) успешно активирована!\n"
-                "Вы можете управлять конфигурацией в разделе «Профиль»",
+            await bot.edit_message_caption(
+                chat_id=callback.message.chat.id,
+                message_id=callback.message.message_id,
+                caption=(
+                    f"✅ Подписка на {duration} месяц(ев) успешно активирована!\n"
+                    "Вы можете управлять конфигурацией в разделе «Профиль»"
+                ),
                 reply_markup=main_menu()
             )
         except subprocess.CalledProcessError as e:
             logger.error(f"Ошибка создания конфига: {e}")
-            await callback.message.edit_text("❌ Ошибка при активации подписки")
+            await bot.edit_message_caption(
+                chat_id=callback.message.chat.id,
+                message_id=callback.message.message_id,
+                caption="❌ Ошибка при активации подписки",
+                reply_markup=main_menu()
+            )
     else:
         await callback.answer("❌ Недостаточно средств на балансе.")
+
 
 @router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
