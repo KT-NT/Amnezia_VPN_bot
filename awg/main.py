@@ -185,10 +185,13 @@ async def handle_config(callback: CallbackQuery):
         return
 
     keyboard = config_actions(config_id)
-    await callback.message.edit_text(
-        f"⚙️ Конфиг #{config_id}\nПорт: {config['port']}\nСрок действия: {config['end_date']}",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption=f"⚙️ Конфиг #{config_id}\nПорт: {config['port']}\nСрок действия: {config['end_date']}",
         reply_markup=keyboard
     )
+
 
 @router.callback_query(lambda c: c.data.startswith('delete_'))
 async def handle_delete(callback: CallbackQuery):
