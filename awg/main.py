@@ -312,11 +312,14 @@ async def handle_channel(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "support")
 async def handle_support(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "🆘 По всем вопросам обращайтесь к администратору:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="🆘 По всем вопросам обращайтесь к администратору:",
         reply_markup=support_menu()
     )
     await callback.answer()
+
 
 @router.callback_query(lambda c: c.data.startswith("back_to_main"))
 async def handle_back_main(callback: CallbackQuery):
