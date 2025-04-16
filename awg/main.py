@@ -68,20 +68,23 @@ async def handle_start(message: Message):
             reply_markup=main_menu()
         )
         
-@router.callback_query(lambda c: c.data == "replenish") #rab
+@router.callback_query(lambda c: c.data == "replenish")
 async def handle_replenish(callback: CallbackQuery):
     user_id = callback.from_user.id
     db.update_balance(user_id, 100)
     
-    await callback.message.answer(
-        "✅ Баланс пополнен на 100 руб.",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="✅ Баланс пополнен на 100 руб.",
         reply_markup=InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
             ]
         )
     )
-    await callback.answer()  
+    await callback.answer()
+
 
 @router.callback_query(lambda c: c.data == "buy_vpn") #раб
 async def buy_vpn(callback: CallbackQuery):
