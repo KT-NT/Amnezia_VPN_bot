@@ -323,8 +323,14 @@ async def handle_support(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data.startswith("back_to_main"))
 async def handle_back_main(callback: CallbackQuery):
-    await callback.message.edit_text("Главное меню:", reply_markup=main_menu())
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="Главное меню:",
+        reply_markup=main_menu()
+    )
     await callback.answer()
+
 
 async def main():
     await dp.start_polling(bot)
