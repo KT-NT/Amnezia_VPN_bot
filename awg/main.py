@@ -263,10 +263,14 @@ async def _send_config_file(user_id: int, config_id: int):
 @router.callback_query(lambda c: c.data.startswith('extend_'))
 async def handle_extend(callback: CallbackQuery):
     config_id = int(callback.data.split('_')[1])
-    await callback.message.edit_text(
-        "💰 Выберите срок продления:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="💰 Выберите срок продления:",
         reply_markup=subscription_options(config_id)
     )
+    await callback.answer()
+
 
 @router.callback_query(lambda c: 'extend' in c.data)
 async def handle_extend_subscription(callback: CallbackQuery):
