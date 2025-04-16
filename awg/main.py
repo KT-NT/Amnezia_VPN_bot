@@ -309,14 +309,33 @@ async def handle_back_to_account(callback: CallbackQuery):
     await handle_account(callback)
     await callback.answer()
 
-@router.callback_query(lambda c: c.data.startswith("back_to_config_"))
+@router.callback_query(lambda c: c.data.startswith("back_to_config"))
 async def handle_back_to_config(callback: CallbackQuery):
     try:
+        # Извлекаем последний элемент, который содержит конфиг_id:
         config_id = int(callback.data.split("_")[-1])
-        await handle_config(callback)
+        # Получаем данные конфигурации из БД:
+        config = db.get_config(config_id)
+        if not config:
+            await callback.answer("❌ Конфигурация не найдена.")
+            return
+
+        keyboard = config_actions(config_id)
+        await bot.edit_message_caption(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            caption=(
+                f"⚙️ Конфиг #{config_id}\n"
+                f"Порт: {config['port']}\n"
+                f"Срок действия: {config['end_date']}"
+            ),
+            reply_markup=keyboard
+        )
     except ValueError:
         await callback.answer("❌ Некорректный идентификатор конфигурации.")
         logger.error(f"Неверный формат config_id: {callback.data}")
+    await callback.answer()
+
 
 @router.callback_query(lambda c: c.data == "channel")
 async def handle_channel(callback: CallbackQuery):
