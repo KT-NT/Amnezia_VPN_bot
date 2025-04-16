@@ -117,10 +117,12 @@ async def handle_install_platform(callback: CallbackQuery):
     )
     await callback.answer()
 
-@router.callback_query(lambda c: c.data == "back_to_install") #rab
+@router.callback_query(lambda c: c.data == "back_to_install")
 async def handle_back_to_install(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📲 Выберите ваше устройство:",
+    await bot.edit_message_caption(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        caption="📲 Выберите ваше устройство:",
         reply_markup=install_menu()
     )
     await callback.answer()
