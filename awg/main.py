@@ -168,12 +168,15 @@ async def handle_subscription(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "account")
 async def handle_account(callback: CallbackQuery):
     user_id = callback.from_user.id
+    balance = db.get_balance(user_id)  # Получаем баланс пользователя из базы данных
     configs = db.get_configs(user_id)
+    
     if not configs:
         await bot.edit_message_caption(
             chat_id=callback.message.chat.id,
             message_id=callback.message.message_id,
-            caption="У вас нет активных конфигураций.",
+            # Добавляем информацию о балансе перед сообщением о том, что конфигураций нет
+            caption=f"Ваш баланс: {balance} руб.\n\nУ вас нет активных конфигураций.",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")]
@@ -186,9 +189,11 @@ async def handle_account(callback: CallbackQuery):
     await bot.edit_message_caption(
         chat_id=callback.message.chat.id,
         message_id=callback.message.message_id,
-        caption="Ваши активные конфигурации:",
+        # Выводим баланс пользователя и затем список активных конфигураций
+        caption=f"Ваш баланс: {balance} руб.\n\nВаши активные конфигурации:",
         reply_markup=keyboard
     )
+
 
 @router.callback_query(lambda c: c.data.startswith('config_'))
 async def handle_config(callback: CallbackQuery):
